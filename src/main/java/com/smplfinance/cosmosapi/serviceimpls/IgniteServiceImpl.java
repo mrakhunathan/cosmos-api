@@ -12,6 +12,7 @@ import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.mashape.unirest.http.HttpResponse;
 import com.mashape.unirest.http.Unirest;
+import com.smplfinance.cosmosapi.models.AccountWrapper;
 import com.smplfinance.cosmosapi.models.Balance;
 import com.smplfinance.cosmosapi.models.BalanceResponseModel;
 import com.smplfinance.cosmosapi.services.IgniteService;
@@ -58,5 +59,23 @@ public class IgniteServiceImpl implements IgniteService {
 			log.error(e.getMessage(), e);
 		}
 		return new ResponseEntity<String>("Failed to Update", HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+
+	@Override
+	public ResponseEntity<AccountWrapper> listAccounts() {
+		try {
+			HttpResponse<String> response = Unirest
+					.get(new StringBuilder().append(environment.getProperty("ignite.baseurl"))
+							.append("cosmos/auth/v1beta1/accounts").toString())
+					.header("accept", "application/json").asString();
+
+			AccountWrapper accounts = new ObjectMapper()
+					.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+					.readValue(response.getBody(), AccountWrapper.class);
+			return new ResponseEntity<AccountWrapper>(accounts, HttpStatus.OK);
+		} catch (Exception e) {
+			log.error(e.getMessage(), e);
+		}
+		return new ResponseEntity<AccountWrapper>(HttpStatus.INTERNAL_SERVER_ERROR);
 	}
 }
